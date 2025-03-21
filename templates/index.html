@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phân Loại Hình Ảnh và Phân Tích Nhận Xét Khách Hàng</title>
+    <style>
+        /* Toàn bộ trang */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9; /* Màu nền nhẹ nhàng */
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Trung tâm ứng dụng */
+        .container {
+            width: 50%;
+            margin: 50px auto; /* Căn giữa */
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1); /* Màu đổ bóng */
+        }
+
+        /* Tiêu đề */
+        h1 {
+            text-align: center;
+            color: #333; /* Màu chữ tối */
+            font-size: 2em;
+        }
+
+        /* Form tải ảnh lên */
+        form {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        input[type="file"], textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* Kết quả phân loại */
+        #result {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #e9e9e9;
+            border-radius: 5px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        #result h3 {
+            color: #333;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+        }
+
+        #result p {
+            font-size: 1em;
+            color: #555;
+        }
+
+        #result strong {
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 80%;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Phân Loại Hình Ảnh Sản Phẩm</h1>
+        <form id="imageForm" enctype="multipart/form-data">
+            <input type="file" name="file" accept="image/*" required>
+            <button type="submit">Phân loại hình ảnh</button>
+        </form>
+
+        <div id="result"></div>
+
+        <h2>Phân Tích Nhận Xét Khách Hàng</h2>
+        <form id="reviewForm" method="POST">
+            <textarea id="reviewText" name="review_text" placeholder="Nhập nhận xét khách hàng..." required></textarea>
+            <br>
+            <button type="submit">Phân tích cảm xúc</button>
+        </form>
+
+        <div id="sentimentResult"></div>
+    </div>
+
+    <script>
+document.getElementById('reviewForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    let formData = new FormData();
+    let reviewText = document.getElementById('reviewText').value;
+    
+    // Kiểm tra xem reviewText có phải là một chuỗi hợp lệ không
+    if (!reviewText || reviewText.trim() === '') {
+        alert('Vui lòng nhập nhận xét!');
+        return;
+    }
+
+    formData.append('review_text', reviewText);
+
+    fetch('/analyze_sentiment', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())  // Đảm bảo nhận được JSON
+    .then(data => {
+        let resultDiv = document.getElementById('sentimentResult');
+        resultDiv.innerHTML = '<h3>Kết quả phân tích cảm xúc:</h3>';
+        
+        if (data.error) {
+            resultDiv.innerHTML += `<p><strong>Không thể phân tích cảm xúc: </strong>${data.error}</p>`;
+        } else {
+            // Kiểm tra nếu dữ liệu phân tích có tồn tại và hợp lệ
+            if (data && data.length > 0) {
+                // Kiểm tra kết quả phân tích cảm xúc
+                let sentiment = data[0][0];  // Dữ liệu đầu tiên trong mảng con
+                resultDiv.innerHTML += `<p><strong>Cảm xúc:</strong> ${sentiment.label}</p>`;
+                resultDiv.innerHTML += `<p><strong>Độ tin cậy:</strong> ${sentiment.score.toFixed(2)}</p>`;
+            } else {
+                resultDiv.innerHTML += `<p><strong>Không có kết quả phân tích cảm xúc hợp lệ.</strong></p>`;
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Có lỗi xảy ra. Vui lòng thử lại.');
+    });
+});
+
+
+
+        // Phân loại hình ảnh sản phẩm
+        document.getElementById('imageForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            let formData = new FormData();
+            let fileInput = document.querySelector('input[type="file"]');
+            formData.append('file', fileInput.files[0]);
+
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Lỗi khi gửi yêu cầu đến server');
+                }
+                return response.json();  // Giải mã kết quả JSON từ server
+            })
+            .then(data => {
+                let resultDiv = document.getElementById('result');
+                resultDiv.innerHTML = '<h3>Kết quả phân loại:</h3>';
+                data.forEach(item => {
+                    resultDiv.innerHTML += `<p><strong>${item.label}</strong> - Độ tin cậy: ${Math.round(item.probability * 100)}%</p>`;
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra. Vui lòng kiểm tra lại.');
+            });
+        });
+    </script>
+
+</body>
+</html>
