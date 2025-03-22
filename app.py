@@ -3,13 +3,12 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image
 import requests
-from flask_cors import CORS 
+from tensorflow.keras.applications import ResNet50, resnet50
 
-# Tải mô hình MobileNetV2 với trọng số ImageNet
-model = tf.keras.applications.MobileNetV2(weights='imagenet')
+# Tải mô hình ResNet50 với trọng số ImageNet
+model = ResNet50(weights='imagenet')
 
 app = Flask(__name__)
-CORS(app)
 
 # Phân tích cảm xúc nhận xét khách hàng sử dụng Hugging Face API
 HF_API_TOKEN = "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"  # Make sure this is before its usage
@@ -21,7 +20,7 @@ headers = {
 def prepare_image(img):
     img = img.resize((224, 224))  # Đổi kích thước ảnh thành 224x224
     img_array = np.array(img)  # Chuyển hình ảnh thành mảng numpy
-    img_array = tf.keras.applications.mobilenet_v2.preprocess_input(img_array)  # Tiền xử lý ảnh cho MobileNetV2
+    img_array = resnet50.preprocess_input(img_array)  # Tiền xử lý ảnh cho ResNet50
     img_array = np.expand_dims(img_array, axis=0)  # Thêm chiều batch (một batch ảnh)
     return img_array
 
@@ -51,6 +50,7 @@ def analyze_sentiment(review_text):
         print(f"API error: {response.status_code} - {response.text}")
         return {"error": f"API error: {response.status_code} - {response.text}"}  # Trả về lỗi dưới dạng JSON
 
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -71,7 +71,7 @@ def predict():
         predictions = model.predict(img_array)  # Dự đoán với mô hình
 
         # Giải mã kết quả dự đoán
-        decoded_predictions = tf.keras.applications.mobilenet_v2.decode_predictions(predictions, top=3)[0]
+        decoded_predictions = resnet50.decode_predictions(predictions, top=3)[0]
 
         # Tạo kết quả trả về dưới dạng JSON
         result = []

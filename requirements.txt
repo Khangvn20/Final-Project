@@ -2,3 +2,4 @@ flask
 tensorflow
 requests
 flask-cors
+gunicorn
