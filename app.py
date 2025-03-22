@@ -3,7 +3,10 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image
 import requests
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Tắt các thông báo về thông tin (info) và cảnh báo (warning)
 from tensorflow.keras.applications import ResNet50, resnet50
+
 
 # Tải mô hình ResNet50 với trọng số ImageNet
 model = ResNet50(weights='imagenet')
