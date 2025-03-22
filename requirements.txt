@@ -3,3 +3,4 @@ tensorflow
 requests
 flask-cors
 gunicorn
+Pillow
